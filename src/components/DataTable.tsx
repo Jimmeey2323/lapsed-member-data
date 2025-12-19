@@ -51,6 +51,17 @@ const DataTable = ({ data, groupBy, allData }: DataTableProps) => {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
 
+  // Filter to only show lapsed/churned members
+  const lapsedData = useMemo(() => {
+    return data.filter((member) => 
+      member.Status?.toLowerCase() === "lapsed" || 
+      member.Status?.toLowerCase() === "churned"
+    );
+  }, [data]);
+
+  // Default groupBy to "Member Name" if not specified
+  const effectiveGroupBy = groupBy ?? "Member Name";
+
   const tableMinWidth = useMemo(() => {
     const columnsWidth = COLUMNS.reduce((sum, col) => sum + col.width, 0);
     return groupBy ? columnsWidth + 40 : columnsWidth;
@@ -68,9 +79,9 @@ const DataTable = ({ data, groupBy, allData }: DataTableProps) => {
   };
 
   const sortedData = useMemo(() => {
-    if (!sort.column) return data;
+    if (!sort.column) return lapsedData;
 
-    return [...data].sort((a, b) => {
+    return [...lapsedData].sort((a, b) => {
       const aVal = a[sort.column as keyof MemberData] || "";
       const bVal = b[sort.column as keyof MemberData] || "";
 
@@ -84,20 +95,18 @@ const DataTable = ({ data, groupBy, allData }: DataTableProps) => {
       const comparison = String(aVal).localeCompare(String(bVal));
       return sort.direction === "asc" ? comparison : -comparison;
     });
-  }, [data, sort]);
+  }, [lapsedData, sort]);
 
   const groupedData = useMemo(() => {
-    if (!groupBy) return { "All Members": sortedData };
-
     const groups: Record<string, MemberData[]> = {};
     sortedData.forEach((item) => {
-      const key = (item[groupBy as keyof MemberData] as string) || "Unknown";
+      const key = (item[effectiveGroupBy as keyof MemberData] as string) || "Unknown";
       if (!groups[key]) groups[key] = [];
       groups[key].push(item);
     });
 
     return groups;
-  }, [sortedData, groupBy]);
+  }, [sortedData, effectiveGroupBy]);
 
   const toggleGroup = (groupKey: string) => {
     const newExpanded = new Set(expandedGroups);
@@ -252,7 +261,7 @@ const DataTable = ({ data, groupBy, allData }: DataTableProps) => {
     }
   };
 
-  const grandTotals = calculateGroupTotals(data);
+  const grandTotals = calculateGroupTotals(lapsedData);
 
   return (
     <>
@@ -265,9 +274,9 @@ const DataTable = ({ data, groupBy, allData }: DataTableProps) => {
         <div className="px-4 py-2.5 border-b border-border bg-muted/30 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Users size={16} className="text-primary" />
-            <span className="text-sm font-semibold text-foreground">Member Data</span>
+            <span className="text-sm font-semibold text-foreground">Lapsed/Churned Members</span>
             <Badge variant="secondary" className="font-mono text-[10px] h-5 px-2">
-              {data.length}
+              {lapsedData.length}
             </Badge>
           </div>
           <div className="flex items-center gap-1">
@@ -286,34 +295,32 @@ const DataTable = ({ data, groupBy, allData }: DataTableProps) => {
         </div>
 
         {/* Table Container */}
-        <div className="overflow-x-auto scrollbar-thin">
-          <table className="w-full border-collapse table-fixed" style={{ minWidth: tableMinWidth }}>
-            <thead>
-              <tr className="bg-muted/50 border-b border-border">
-                {groupBy && (
-                  <th className="w-10 px-2 h-[35px]" />
-                )}
+        <div className="overflow-x-auto overflow-y-visible" style={{ maxWidth: "100%" }}>
+          <table className="w-full border-collapse" style={{ minWidth: tableMinWidth }}>
+            <thead className="sticky top-0 z-10">
+              <tr className="bg-slate-800">
+                <th className="w-10 px-2 h-[35px]" />
                 {COLUMNS.map((column) => (
                   <th
                     key={column.key}
-                    className="px-3 h-[35px] text-left cursor-pointer hover:bg-muted/70 transition-colors"
+                    className="px-3 h-[35px] text-left cursor-pointer hover:bg-slate-700 transition-colors bg-slate-800"
                     style={{ width: column.width, minWidth: column.width, maxWidth: column.width }}
                     onClick={() => handleSort(column.key)}
                   >
                     <div className="flex items-center gap-1.5 whitespace-nowrap">
-                      <column.icon size={11} className="text-primary/70 flex-shrink-0" />
-                      <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                      <column.icon size={11} className="text-slate-300 flex-shrink-0" />
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-white">
                         {column.label}
                       </span>
                       <span className="flex-shrink-0">
                         {sort.column === column.key ? (
                           sort.direction === "asc" ? (
-                            <ArrowUp size={10} className="text-primary" />
+                            <ArrowUp size={10} className="text-white" />
                           ) : (
-                            <ArrowDown size={10} className="text-primary" />
+                            <ArrowDown size={10} className="text-white" />
                           )
                         ) : (
-                          <ArrowUpDown size={10} className="opacity-30" />
+                          <ArrowUpDown size={10} className="text-slate-400" />
                         )}
                       </span>
                     </div>
@@ -324,56 +331,54 @@ const DataTable = ({ data, groupBy, allData }: DataTableProps) => {
             <tbody>
               {Object.entries(groupedData).map(([groupKey, members]) => (
                 <>
-                  {groupBy && (
-                    <tr
-                      key={`group-${groupKey}`}
-                      className="bg-accent/50 hover:bg-accent/70 cursor-pointer transition-colors border-b border-border/50"
-                      onClick={() => toggleGroup(groupKey)}
-                    >
-                      <td className="w-10 px-2 h-[35px]">
-                        {expandedGroups.has(groupKey) ? (
-                          <ChevronDown size={14} className="text-primary" />
-                        ) : (
-                          <ChevronRight size={14} className="text-muted-foreground" />
-                        )}
-                      </td>
-                      <td colSpan={4} className="px-3 h-[35px]">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-foreground">{groupKey}</span>
-                          <Badge variant="secondary" className="font-mono text-[10px] h-4 px-1.5">
-                            {members.length}
-                          </Badge>
-                        </div>
-                      </td>
-                      <td className="px-3 h-[35px] font-mono text-xs font-semibold text-foreground">
-                        {formatCurrencyCompact(calculateGroupTotals(members).totalAmount)}
-                      </td>
-                      <td className="px-3 h-[35px] font-mono text-xs text-foreground">
-                        {calculateGroupTotals(members).totalSessions}
-                      </td>
-                      <td className="px-3 h-[35px] font-mono text-xs text-foreground">
-                        {formatNumber(calculateGroupTotals(members).avgAttendance, 0)}%
-                      </td>
-                      <td className="px-3 h-[35px] font-mono text-xs text-foreground">
-                        {formatNumber(calculateGroupTotals(members).avgCancellation, 0)}%
-                      </td>
-                      <td colSpan={2} />
-                    </tr>
-                  )}
-                  {(!groupBy || expandedGroups.has(groupKey)) &&
+                  <tr
+                    key={`group-${groupKey}`}
+                    className="bg-slate-100 hover:bg-slate-200 cursor-pointer transition-colors border-b border-border"
+                    onClick={() => toggleGroup(groupKey)}
+                  >
+                    <td className="w-10 px-2 h-[35px]">
+                      {expandedGroups.has(groupKey) ? (
+                        <ChevronDown size={14} className="text-slate-700" />
+                      ) : (
+                        <ChevronRight size={14} className="text-slate-500" />
+                      )}
+                    </td>
+                    <td colSpan={4} className="px-3 h-[35px]">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-slate-800">{groupKey}</span>
+                        <Badge variant="secondary" className="font-mono text-[10px] h-4 px-1.5 bg-slate-200 text-slate-700">
+                          {members.length} records
+                        </Badge>
+                      </div>
+                    </td>
+                    <td className="px-3 h-[35px] font-mono text-xs font-semibold text-slate-800">
+                      {formatCurrencyCompact(calculateGroupTotals(members).totalAmount)}
+                    </td>
+                    <td className="px-3 h-[35px] font-mono text-xs text-slate-800">
+                      {calculateGroupTotals(members).totalSessions}
+                    </td>
+                    <td className="px-3 h-[35px] font-mono text-xs text-slate-800">
+                      {formatNumber(calculateGroupTotals(members).avgAttendance, 0)}%
+                    </td>
+                    <td className="px-3 h-[35px] font-mono text-xs text-slate-800">
+                      {formatNumber(calculateGroupTotals(members).avgCancellation, 0)}%
+                    </td>
+                    <td colSpan={2} />
+                  </tr>
+                  {expandedGroups.has(groupKey) &&
                     members.map((row, idx) => (
                       <tr
                         key={`${row["Member ID"]}-${idx}`}
-                        className={`border-b border-border/30 transition-colors hover:bg-accent/30 cursor-pointer ${
-                          idx % 2 === 0 ? "bg-card" : "bg-muted/20"
+                        className={`border-b border-border/30 transition-colors hover:bg-slate-50 cursor-pointer ${
+                          idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"
                         }`}
                         onClick={() => setSelectedMember(row["Member ID"])}
                       >
-                        {groupBy && <td className="w-10 px-2 h-[35px]" />}
+                        <td className="w-10 px-2 h-[35px]" />
                         {COLUMNS.map((column) => (
                           <td
                             key={column.key}
-                            className="px-3 h-[35px] overflow-hidden"
+                            className="px-3 h-[35px] overflow-hidden whitespace-nowrap"
                             style={{ width: column.width, minWidth: column.width, maxWidth: column.width }}
                           >
                             {renderCellValue(row, column)}
@@ -388,13 +393,13 @@ const DataTable = ({ data, groupBy, allData }: DataTableProps) => {
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2.5 border-t border-border bg-muted/20">
+        <div className="px-4 py-2.5 border-t border-border bg-slate-50">
           <div className="flex items-center justify-between flex-wrap gap-3 text-xs">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
-                <Users size={12} className="text-primary" />
-                <span className="text-muted-foreground">Total:</span>
-                <span className="font-mono font-semibold text-foreground">{data.length}</span>
+                <Users size={12} className="text-slate-600" />
+                <span className="text-slate-600">Lapsed/Churned:</span>
+                <span className="font-mono font-semibold text-slate-800">{lapsedData.length}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <DollarSign size={12} className="text-success" />
