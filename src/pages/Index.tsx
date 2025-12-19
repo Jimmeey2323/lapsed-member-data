@@ -224,7 +224,7 @@ const Index = () => {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <LocationMonthlyView analytics={analytics} />
+                    <LocationMonthlyView analytics={analytics} data={filteredData} />
                   </motion.div>
                 )}
               </AnimatePresence>

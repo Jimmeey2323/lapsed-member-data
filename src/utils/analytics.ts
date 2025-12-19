@@ -19,7 +19,8 @@ export const isFrozenMember = (member: MemberData): boolean => {
 };
 
 export const isHighRiskMember = (member: MemberData): boolean => {
-  if (member.Status === "Lapsed") return false;
+  // Only active members can be marked as high risk (not lapsed or renewed)
+  if (member.Status !== "Active") return false;
   
   const attendanceRate = parseFloat(member["Attendance Rate %"]) || 0;
   const cancellationRate = parseFloat(member["Cancellation Rate %"]) || 0;
