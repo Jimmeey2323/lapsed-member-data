@@ -18,7 +18,9 @@ import {
 } from "recharts";
 import { ChurnAnalytics, MemberData } from "@/types/member";
 import { TrendingUp, TrendingDown, ArrowRight, Calendar } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface MonthOnMonthPanelProps {
   analytics: ChurnAnalytics;
@@ -35,6 +37,7 @@ const COLORS = {
 };
 
 const MonthOnMonthPanel = ({ analytics, data }: MonthOnMonthPanelProps) => {
+  const [drillMonth, setDrillMonth] = useState<string | null>(null);
   // Calculate month-on-month data - track first purchase per member for "new" count
   const monthlyData = useMemo(() => {
     const months: Record<string, { 
@@ -389,18 +392,18 @@ const MonthOnMonthPanel = ({ analytics, data }: MonthOnMonthPanelProps) => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-muted/50">
-                <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Month</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">New</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Churned</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Net Change</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Revenue</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Churn Rate</th>
+              <tr className="bg-gradient-to-r from-sky-900 via-indigo-900 to-indigo-800 text-white">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Month</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider">New</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider">Churned</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider">Net Change</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider">Revenue</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider">Churn Rate</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {[...monthlyData].reverse().map((row, index) => (
-                <tr key={row.month} className="table-row-hover">
+                <tr key={row.month} className="table-row-hover cursor-pointer" onClick={() => setDrillMonth(row.month)}>
                   <td className="px-6 py-4 text-sm font-medium text-foreground">{row.month}</td>
                   <td className="px-6 py-4 text-sm text-right font-mono text-success">{row.newMembers}</td>
                   <td className="px-6 py-4 text-sm text-right font-mono text-destructive">{row.lapsedMembers}</td>
@@ -427,6 +430,66 @@ const MonthOnMonthPanel = ({ analytics, data }: MonthOnMonthPanelProps) => {
           </table>
         </div>
       </div>
+
+      {/* Drilldown modal for month */}
+      {drillMonth && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-foreground/20 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setDrillMonth(null)}
+        >
+          <motion.div
+            initial={{ scale: 0.98, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-card border border-border rounded-lg shadow-elevated max-w-4xl w-full max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-border bg-gradient-to-r from-sky-900 via-indigo-900 to-indigo-800 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar size={16} className="text-white" />
+                <span className="font-semibold text-white">{drillMonth}</span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setDrillMonth(null)}>Close</Button>
+            </div>
+
+            <div className="overflow-auto max-h-[calc(80vh-60px)]">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-gradient-to-r from-sky-900 via-indigo-900 to-indigo-800 text-white sticky top-0">
+                    <th className="px-3 h-[35px] text-left font-semibold text-white">Member</th>
+                    <th className="px-3 h-[35px] text-left font-semibold text-white">Status</th>
+                    <th className="px-3 h-[35px] text-left font-semibold text-white">Membership</th>
+                    <th className="px-3 h-[35px] text-right font-semibold text-white">Revenue</th>
+                    <th className="px-3 h-[35px] text-right font-semibold text-white">Sessions</th>
+                    <th className="px-3 h-[35px] text-right font-semibold text-white">Attend %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.filter((member) => {
+                    const getMonthKey = (dateStr: string) => {
+                      const date = new Date(dateStr.replace(",", "").trim());
+                      return isNaN(date.getTime()) ? "" : date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+                    };
+                    const startMonth = member["Start Date"] ? getMonthKey(member["Start Date"]) : "";
+                    const churnMonth = member["Churned Date"] ? getMonthKey(member["Churned Date"]) : "";
+                    return startMonth === drillMonth || churnMonth === drillMonth;
+                  }).map((member, idx) => (
+                    <tr key={`${member["Member ID"]}-${idx}`} className={`border-b border-border/20 hover:bg-muted/20 cursor-pointer ${idx % 2 === 0 ? "bg-card" : "bg-muted/10"}`}>
+                      <td className="px-3 h-[35px] font-medium text-foreground">{member["Member Name"]}</td>
+                      <td className="px-3 h-[35px]"><Badge variant="outline" className={`text-[10px] ${member.Status === "Active" ? "text-success border-success/30" : "text-destructive border-destructive/30"}`}>{member.Status}</Badge></td>
+                      <td className="px-3 h-[35px] text-muted-foreground">{member["Membership Name"]}</td>
+                      <td className="px-3 h-[35px] text-right font-mono text-foreground">{`₹${(parseFloat(member["Amount Paid"]) || 0).toFixed(2)}`}</td>
+                      <td className="px-3 h-[35px] text-right font-mono text-foreground">{member["Total Sessions Completed"]}</td>
+                      <td className="px-3 h-[35px] text-right font-mono text-foreground">{member["Attendance Rate %"]}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </motion.div>
   );
 };

@@ -180,7 +180,7 @@ const Index = () => {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <DataTable data={filteredData} groupBy={groupBy} allData={data} />
+                    <DataTable data={filteredData} groupBy={groupBy} allData={filteredData} />
                   </motion.div>
                 )}
                 {activeView === "analytics" && (

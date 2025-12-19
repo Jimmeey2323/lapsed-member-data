@@ -247,8 +247,8 @@ const LocationMonthlyView = ({ analytics, data }: LocationMonthlyViewProps) => {
               >
                 <table className="w-full border-collapse text-xs">
                   <thead>
-                    <tr className="bg-muted/30">
-                      <th className="px-3 h-[35px] text-left font-semibold text-foreground whitespace-nowrap border-r border-border/50 min-w-[160px] sticky left-0 bg-muted/30 z-10">
+                    <tr className="bg-gradient-to-r from-sky-900 via-indigo-900 to-indigo-800 text-white">
+                      <th className="px-3 h-[35px] text-left font-semibold text-white whitespace-nowrap border-r border-border/50 min-w-[160px] sticky left-0 bg-gradient-to-r from-sky-900 via-indigo-900 to-indigo-800 z-10">
                         <div className="flex items-center gap-1.5">
                           <MapPin size={11} className="text-muted-foreground" />
                           Location
@@ -257,12 +257,12 @@ const LocationMonthlyView = ({ analytics, data }: LocationMonthlyViewProps) => {
                       {sortedMonths.map((month) => (
                         <th
                           key={month}
-                          className="px-3 h-[35px] text-center font-semibold text-foreground whitespace-nowrap border-r border-border/20 min-w-[80px]"
+                          className="px-3 h-[35px] text-center font-semibold text-white whitespace-nowrap border-r border-border/20 min-w-[80px] bg-transparent"
                         >
                           {month}
                         </th>
                       ))}
-                      <th className="px-3 h-[35px] text-center font-bold text-foreground whitespace-nowrap bg-muted/50 min-w-[80px]">
+                      <th className="px-3 h-[35px] text-center font-bold text-white whitespace-nowrap min-w-[80px] bg-transparent">
                         Total
                       </th>
                     </tr>
@@ -341,10 +341,10 @@ const LocationMonthlyView = ({ analytics, data }: LocationMonthlyViewProps) => {
             className="bg-card border border-border rounded-lg shadow-elevated max-w-4xl w-full max-h-[80vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-muted/30">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-gradient-to-r from-sky-900 via-indigo-900 to-indigo-800 text-white">
               <div className="flex items-center gap-2">
                 <MapPin size={16} className="text-primary" />
-                <span className="font-semibold text-foreground">{drillDown.location}</span>
+                <span className="font-semibold text-white">{drillDown.location}</span>
                 <Badge variant="outline" className="font-mono text-xs">{drillDown.month}</Badge>
                 <Badge className="text-xs capitalize">{drillDown.metric}</Badge>
               </div>
@@ -360,16 +360,16 @@ const LocationMonthlyView = ({ analytics, data }: LocationMonthlyViewProps) => {
                 </div>
               ) : (
                 <table className="w-full text-xs">
-                  <thead className="bg-muted/30 sticky top-0">
-                    <tr>
-                      <th className="px-3 h-[35px] text-left font-semibold text-foreground">Member</th>
-                      <th className="px-3 h-[35px] text-left font-semibold text-foreground">Status</th>
-                      <th className="px-3 h-[35px] text-left font-semibold text-foreground">Membership</th>
-                      <th className="px-3 h-[35px] text-right font-semibold text-foreground">Revenue</th>
-                      <th className="px-3 h-[35px] text-right font-semibold text-foreground">Sessions</th>
-                      <th className="px-3 h-[35px] text-right font-semibold text-foreground">Attend %</th>
-                    </tr>
-                  </thead>
+                  <thead className="sticky top-0">
+                        <tr className="bg-gradient-to-r from-sky-900 via-indigo-900 to-indigo-800 text-white">
+                          <th className="px-3 h-[35px] text-left font-semibold text-white">Member</th>
+                          <th className="px-3 h-[35px] text-left font-semibold text-white">Status</th>
+                          <th className="px-3 h-[35px] text-left font-semibold text-white">Membership</th>
+                          <th className="px-3 h-[35px] text-right font-semibold text-white">Revenue</th>
+                          <th className="px-3 h-[35px] text-right font-semibold text-white">Sessions</th>
+                          <th className="px-3 h-[35px] text-right font-semibold text-white">Attend %</th>
+                        </tr>
+                      </thead>
                   <tbody>
                     {drillDownMembers.map((member, idx) => (
                       <tr 
