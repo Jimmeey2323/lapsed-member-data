@@ -35,7 +35,7 @@ const COLORS = {
 };
 
 const MonthOnMonthPanel = ({ analytics, data }: MonthOnMonthPanelProps) => {
-  // Calculate month-on-month data
+  // Calculate month-on-month data - track first purchase per member for "new" count
   const monthlyData = useMemo(() => {
     const months: Record<string, { 
       newMembers: number; 
@@ -46,8 +46,27 @@ const MonthOnMonthPanel = ({ analytics, data }: MonthOnMonthPanelProps) => {
       churnRate: number;
     }> = {};
 
+    // Track which members have already been counted as "new" (first purchase only)
+    const memberFirstPurchase: Record<string, string> = {};
+    
+    // First pass: find the earliest purchase date for each member
     data.forEach((member) => {
-      // Get start month for new members
+      const memberId = member["Member ID"];
+      const startDate = member["Start Date"];
+      if (startDate && memberId) {
+        const date = new Date(startDate.replace(",", "").trim());
+        if (!isNaN(date.getTime())) {
+          const monthKey = date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+          if (!memberFirstPurchase[memberId] || new Date(memberFirstPurchase[memberId]) > date) {
+            memberFirstPurchase[memberId] = startDate;
+          }
+        }
+      }
+    });
+
+    // Second pass: count new members only for their first purchase
+    data.forEach((member) => {
+      const memberId = member["Member ID"];
       const startDate = member["Start Date"];
       if (startDate) {
         const date = new Date(startDate.replace(",", "").trim());
@@ -56,7 +75,12 @@ const MonthOnMonthPanel = ({ analytics, data }: MonthOnMonthPanelProps) => {
           if (!months[monthKey]) {
             months[monthKey] = { newMembers: 0, lapsedMembers: 0, activeMembers: 0, revenue: 0, sessions: 0, churnRate: 0 };
           }
-          months[monthKey].newMembers++;
+          
+          // Only count as new if this is their first purchase
+          if (memberFirstPurchase[memberId] === startDate) {
+            months[monthKey].newMembers++;
+          }
+          
           months[monthKey].revenue += parseFloat(member["Amount Paid"]) || 0;
           months[monthKey].sessions += parseInt(member["Total Sessions Completed"]) || 0;
         }

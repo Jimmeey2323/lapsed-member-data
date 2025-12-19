@@ -224,24 +224,20 @@ const DataTable = ({ data, groupBy, allData }: DataTableProps) => {
         );
       case "Member Name":
         return (
-          <button
-            onClick={() => setSelectedMember(row["Member ID"])}
-            className="flex items-center gap-2 hover:text-primary transition-colors text-left group"
-          >
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/20 group-hover:border-primary/40 transition-colors">
+          <div className="flex items-center gap-2 group">
+            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 border border-border">
               <User size={11} className="text-primary" />
             </div>
-            <span className="text-xs font-medium truncate max-w-[100px] group-hover:text-primary">
+            <span className="text-xs font-medium truncate max-w-[100px] whitespace-nowrap">
               {value as string}
             </span>
-          </button>
+          </div>
         );
       case "Primary Location":
       case "Membership Name":
         return (
           <span
-            className="text-xs text-muted-foreground truncate block"
-            style={{ maxWidth: column.width - 20 }}
+            className="text-xs text-muted-foreground truncate block whitespace-nowrap overflow-hidden"
             title={value as string}
           >
             {value as string}
@@ -291,16 +287,16 @@ const DataTable = ({ data, groupBy, allData }: DataTableProps) => {
 
         {/* Table Container */}
         <div className="overflow-x-auto scrollbar-thin">
-          <table className="w-full border-collapse" style={{ minWidth: tableMinWidth }}>
+          <table className="w-full border-collapse table-fixed" style={{ minWidth: tableMinWidth }}>
             <thead>
               <tr className="bg-muted/50 border-b border-border">
                 {groupBy && (
-                  <th className="w-10 px-2 py-2" />
+                  <th className="w-10 px-2 h-[35px]" />
                 )}
                 {COLUMNS.map((column) => (
                   <th
                     key={column.key}
-                    className="px-3 py-2 text-left cursor-pointer hover:bg-muted/70 transition-colors"
+                    className="px-3 h-[35px] text-left cursor-pointer hover:bg-muted/70 transition-colors"
                     style={{ width: column.width, minWidth: column.width, maxWidth: column.width }}
                     onClick={() => handleSort(column.key)}
                   >
@@ -334,14 +330,14 @@ const DataTable = ({ data, groupBy, allData }: DataTableProps) => {
                       className="bg-accent/50 hover:bg-accent/70 cursor-pointer transition-colors border-b border-border/50"
                       onClick={() => toggleGroup(groupKey)}
                     >
-                      <td className="w-10 px-2 py-2">
+                      <td className="w-10 px-2 h-[35px]">
                         {expandedGroups.has(groupKey) ? (
                           <ChevronDown size={14} className="text-primary" />
                         ) : (
                           <ChevronRight size={14} className="text-muted-foreground" />
                         )}
                       </td>
-                      <td colSpan={4} className="px-3 py-2">
+                      <td colSpan={4} className="px-3 h-[35px]">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-semibold text-foreground">{groupKey}</span>
                           <Badge variant="secondary" className="font-mono text-[10px] h-4 px-1.5">
@@ -349,16 +345,16 @@ const DataTable = ({ data, groupBy, allData }: DataTableProps) => {
                           </Badge>
                         </div>
                       </td>
-                      <td className="px-3 py-2 font-mono text-xs font-semibold text-foreground">
+                      <td className="px-3 h-[35px] font-mono text-xs font-semibold text-foreground">
                         {formatCurrencyCompact(calculateGroupTotals(members).totalAmount)}
                       </td>
-                      <td className="px-3 py-2 font-mono text-xs text-foreground">
+                      <td className="px-3 h-[35px] font-mono text-xs text-foreground">
                         {calculateGroupTotals(members).totalSessions}
                       </td>
-                      <td className="px-3 py-2 font-mono text-xs text-foreground">
+                      <td className="px-3 h-[35px] font-mono text-xs text-foreground">
                         {formatNumber(calculateGroupTotals(members).avgAttendance, 0)}%
                       </td>
-                      <td className="px-3 py-2 font-mono text-xs text-foreground">
+                      <td className="px-3 h-[35px] font-mono text-xs text-foreground">
                         {formatNumber(calculateGroupTotals(members).avgCancellation, 0)}%
                       </td>
                       <td colSpan={2} />
@@ -368,15 +364,16 @@ const DataTable = ({ data, groupBy, allData }: DataTableProps) => {
                     members.map((row, idx) => (
                       <tr
                         key={`${row["Member ID"]}-${idx}`}
-                        className={`border-b border-border/30 transition-colors hover:bg-accent/30 ${
+                        className={`border-b border-border/30 transition-colors hover:bg-accent/30 cursor-pointer ${
                           idx % 2 === 0 ? "bg-card" : "bg-muted/20"
                         }`}
+                        onClick={() => setSelectedMember(row["Member ID"])}
                       >
-                        {groupBy && <td className="w-10 px-2 py-2" />}
+                        {groupBy && <td className="w-10 px-2 h-[35px]" />}
                         {COLUMNS.map((column) => (
                           <td
                             key={column.key}
-                            className="px-3 py-2"
+                            className="px-3 h-[35px] overflow-hidden"
                             style={{ width: column.width, minWidth: column.width, maxWidth: column.width }}
                           >
                             {renderCellValue(row, column)}
